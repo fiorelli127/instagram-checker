@@ -45,23 +45,35 @@ document.getElementById("btn").addEventListener("click", async function () {
     const dataFollowers = JSON.parse(await f1.text());
     const dataFollowing = JSON.parse(await f2.text());
 
-    // followers
-    let followers = [];
-    if (Array.isArray(dataFollowers)) {
-      followers = dataFollowers.map(u => u.string_list_data[0].value);
-    } else if (dataFollowers.followers) {
-      followers = dataFollowers.followers.map(u => u.string_list_data[0].value);
+    function extrairUsuarios(obj) {
+      let lista = [];
+
+      function procurar(item) {
+        if (Array.isArray(item)) {
+          item.forEach(procurar);
+        } else if (typeof item === "object" && item !== null) {
+          if (item.string_list_data) {
+            item.string_list_data.forEach(s => {
+              if (s.value) lista.push(s.value);
+            });
+          }
+          for (let key in item) {
+            procurar(item[key]);
+          }
+        }
+      }
+
+      procurar(obj);
+      return lista;
     }
 
-    // following
-    const following = dataFollowing.relationships_following.map(
-      u => u.string_list_data[0].value
-    );
+    const followers = extrairUsuarios(dataFollowers);
+    const following = extrairUsuarios(dataFollowing);
 
     const naoSeguem = following.filter(u => !followers.includes(u));
 
     document.getElementById("saida").innerText =
-      "Não te seguem:\n\n" + naoSeguem.join("\n");
+      "Não te seguem:\n\n" + (naoSeguem.length ? naoSeguem.join("\n") : "Nenhum");
 
   } catch (e) {
     alert("Erro ao ler os arquivos");

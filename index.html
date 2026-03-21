@@ -1,40 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Instagram Checker</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #0f0f0f;
+  color: #fff;
+  padding: 20px;
+}
+
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+button {
+  background: #222;
+  color: white;
+}
+
+.section {
+  margin-top: 20px;
+}
+
+.lista {
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #111;
+  padding: 10px;
+  border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📊 Instagram Checker</h2>
+
+<input type="file" id="followers">
+<input type="file" id="following">
+
+<button onclick="analisar()">Analisar</button>
+
+<div class="section">
+  <h3>❌ Não te seguem</h3>
+  <div id="naoSeguem" class="lista"></div>
+</div>
+
+<div class="section">
+  <h3>⚠️ Você não segue</h3>
+  <div id="vcNaoSegue" class="lista"></div>
+</div>
+
+<div class="section">
+  <h3>🔁 Mútuos</h3>
+  <div id="mutuos" class="lista"></div>
+</div>
+
 <script>
 async function analisar() {
-  const followersFile = document.getElementById('followers').files[0];
-  const followingFile = document.getElementById('following').files[0];
+  try {
+    const followersFile = document.getElementById('followers').files[0];
+    const followingFile = document.getElementById('following').files[0];
 
-  if (!followersFile || !followingFile) {
-    alert("Selecione os dois arquivos!");
-    return;
+    if (!followersFile || !followingFile) {
+      alert("Selecione os dois arquivos!");
+      return;
+    }
+
+    const followersData = JSON.parse(await followersFile.text());
+    const followingData = JSON.parse(await followingFile.text());
+
+    // followers (formato padrão)
+    const followers = followersData.map(u =>
+      u.string_list_data[0].value
+    );
+
+    // following (formato diferente)
+    const following = followingData.relationships_following.map(u =>
+      u.string_list_data[0].value
+    );
+
+    const followersSet = new Set(followers);
+    const followingSet = new Set(following);
+
+    const naoSeguem = following.filter(u => !followersSet.has(u));
+    const vcNaoSegue = followers.filter(u => !followingSet.has(u));
+    const mutuos = following.filter(u => followersSet.has(u));
+
+    document.getElementById("naoSeguem").innerText =
+      naoSeguem.join("\n") || "Nenhum";
+
+    document.getElementById("vcNaoSegue").innerText =
+      vcNaoSegue.join("\n") || "Nenhum";
+
+    document.getElementById("mutuos").innerText =
+      mutuos.join("\n") || "Nenhum";
+
+  } catch (erro) {
+    alert("Erro ao ler arquivos. Verifique se são JSON corretos.");
+    console.log(erro);
   }
-
-  const followersData = JSON.parse(await followersFile.text());
-  const followingData = JSON.parse(await followingFile.text());
-
-  // 👇 followers (formato correto do Instagram)
-  const followers = followersData.map(u =>
-    u.string_list_data[0].value
-  );
-
-  // 👇 following (outro formato)
-  const following = followingData.relationships_following.map(u =>
-    u.string_list_data[0].value
-  );
-
-  const followersSet = new Set(followers);
-  const followingSet = new Set(following);
-
-  const naoSeguem = following.filter(u => !followersSet.has(u));
-  const vcNaoSegue = followers.filter(u => !followingSet.has(u));
-  const mutuos = following.filter(u => followersSet.has(u));
-
-  document.getElementById("naoSeguem").innerText =
-    naoSeguem.join("\n") || "Nenhum";
-
-  document.getElementById("vcNaoSegue").innerText =
-    vcNaoSegue.join("\n") || "Nenhum";
-
-  document.getElementById("mutuos").innerText =
-    mutuos.join("\n") || "Nenhum";
 }
 </script>
+
+</body>
+</html>

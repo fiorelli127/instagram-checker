@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Instagram Checker</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #111;
+      color: #fff;
+    }
+    button {
+      padding: 10px;
+      margin-top: 10px;
+      width: 100%;
+      background: #444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+    }
+    input {
+      margin-top: 10px;
+      width: 100%;
+    }
+    #resultado {
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<h2>📊 Ver quem não te segue</h2>
+
+<label>Followers:</label>
+<input type="file" id="followers">
+
+<label>Following:</label>
+<input type="file" id="following">
+
+<button onclick="analisar()">Analisar</button>
+
+<div id="resultado"></div>
+
+<script>
+async function analisar() {
+  const followersFile = document.getElementById('followers').files[0];
+  const followingFile = document.getElementById('following').files[0];
+
+  if (!followersFile || !followingFile) {
+    alert("Selecione os dois arquivos!");
+    return;
+  }
+
+  const followersData = JSON.parse(await followersFile.text());
+  const followingData = JSON.parse(await followingFile.text());
+
+  const followers = new Set(
+    followersData.map(u => u.string_list_data[0].value)
+  );
+
+  const following = new Set(
+    followingData.relationships_following.map(u => u.string_list_data[0].value)
+  );
+
+  const naoSeguem = [...following].filter(u => !followers.has(u));
+
+  document.getElementById("resultado").innerText =
+    "❌ Não te seguem de volta:\n\n" + naoSeguem.join("\n");
+}
+</script>
+
+</body>
+</html>

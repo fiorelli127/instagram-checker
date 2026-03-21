@@ -1,3 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Instagram Checker</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #0f0f0f;
+  color: #fff;
+  padding: 20px;
+}
+
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+button {
+  background: #222;
+  color: white;
+}
+
+.section {
+  margin-top: 20px;
+}
+
+.lista {
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #111;
+  padding: 10px;
+  border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📊 Instagram Checker</h2>
+
+<input type="file" id="followers">
+<input type="file" id="following">
+
+<button onclick="analisar()">Analisar</button>
+
+<div class="section">
+  <h3>❌ Não te seguem</h3>
+  <div id="naoSeguem" class="lista"></div>
+</div>
+
+<div class="section">
+  <h3>⚠️ Você não segue</h3>
+  <div id="vcNaoSegue" class="lista"></div>
+</div>
+
+<div class="section">
+  <h3>🔁 Mútuos</h3>
+  <div id="mutuos" class="lista"></div>
+</div>
+
 <script>
 async function analisar() {
   try {
@@ -12,39 +78,24 @@ async function analisar() {
     const followersRaw = JSON.parse(await followersFile.text());
     const followingRaw = JSON.parse(await followingFile.text());
 
-    // 🔥 CORREÇÃO DO FOLLOWERS (detecta formato)
     let followers = [];
 
+    // 🔥 trata QUALQUER formato de followers
     if (Array.isArray(followersRaw)) {
-      followers = followersRaw.map(u => u.string_list_data[0].value);
+      followers = followersRaw.map(u => u.string_list_data?.[0]?.value).filter(Boolean);
     } else if (followersRaw.followers) {
-      followers = followersRaw.followers.map(u => u.string_list_data[0].value);
+      followers = followersRaw.followers.map(u => u.string_list_data?.[0]?.value).filter(Boolean);
+    } else {
+      for (let key in followersRaw) {
+        if (Array.isArray(followersRaw[key])) {
+          followersRaw[key].forEach(u => {
+            let val = u?.string_list_data?.[0]?.value;
+            if (val) followers.push(val);
+          });
+        }
+      }
     }
 
-    // 🔥 FOLLOWING (sempre nesse formato)
-    const following = followingRaw.relationships_following.map(u =>
-      u.string_list_data[0].value
-    );
-
-    const followersSet = new Set(followers);
-    const followingSet = new Set(following);
-
-    const naoSeguem = following.filter(u => !followersSet.has(u));
-    const vcNaoSegue = followers.filter(u => !followingSet.has(u));
-    const mutuos = following.filter(u => followersSet.has(u));
-
-    document.getElementById("naoSeguem").innerText =
-      naoSeguem.join("\n") || "Nenhum";
-
-    document.getElementById("vcNaoSegue").innerText =
-      vcNaoSegue.join("\n") || "Nenhum";
-
-    document.getElementById("mutuos").innerText =
-      mutuos.join("\n") || "Nenhum";
-
-  } catch (e) {
-    alert("Erro ao processar os arquivos!");
-    console.log(e);
-  }
-}
-</script>
+    // following (padrão)
+    let following = [];
+    if (followingRaw.relationships

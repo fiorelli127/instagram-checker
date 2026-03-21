@@ -1,119 +1,50 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Instagram Checker</title>
-
-<style>
-body {
-  font-family: Arial;
-  background: #0f0f0f;
-  color: #fff;
-  padding: 20px;
-}
-
-h2 {
-  text-align: center;
-}
-
-input, button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 10px;
-  border: none;
-}
-
-button {
-  background: #1f1f1f;
-  color: white;
-  font-weight: bold;
-}
-
-button:hover {
-  background: #333;
-}
-
-#resultado {
-  margin-top: 20px;
-  white-space: pre-wrap;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-#contador {
-  margin-top: 15px;
-  font-size: 18px;
-  text-align: center;
-}
-
-#search {
-  margin-top: 10px;
-}
-</style>
-
-</head>
-<body>
-
-<h2>📊 Instagram Checker</h2>
-
-<input type="file" id="followers">
-<input type="file" id="following">
-
-<button onclick="analisar()">Analisar</button>
-
-<input type="text" id="search" placeholder="🔍 Buscar usuário..." onkeyup="filtrar()">
-
-<div id="contador"></div>
-
-<button onclick="copiar()">📋 Copiar lista</button>
-
-<div id="resultado"></div>
-
 <script>
-let lista = [];
-
 async function analisar() {
-  const followersFile = document.getElementById('followers').files[0];
-  const followingFile = document.getElementById('following').files[0];
+  try {
+    const followersFile = document.getElementById('followers').files[0];
+    const followingFile = document.getElementById('following').files[0];
 
-  if (!followersFile || !followingFile) {
-    alert("Selecione os dois arquivos!");
-    return;
+    if (!followersFile || !followingFile) {
+      alert("Selecione os dois arquivos!");
+      return;
+    }
+
+    const followersRaw = JSON.parse(await followersFile.text());
+    const followingRaw = JSON.parse(await followingFile.text());
+
+    // 🔥 CORREÇÃO DO FOLLOWERS (detecta formato)
+    let followers = [];
+
+    if (Array.isArray(followersRaw)) {
+      followers = followersRaw.map(u => u.string_list_data[0].value);
+    } else if (followersRaw.followers) {
+      followers = followersRaw.followers.map(u => u.string_list_data[0].value);
+    }
+
+    // 🔥 FOLLOWING (sempre nesse formato)
+    const following = followingRaw.relationships_following.map(u =>
+      u.string_list_data[0].value
+    );
+
+    const followersSet = new Set(followers);
+    const followingSet = new Set(following);
+
+    const naoSeguem = following.filter(u => !followersSet.has(u));
+    const vcNaoSegue = followers.filter(u => !followingSet.has(u));
+    const mutuos = following.filter(u => followersSet.has(u));
+
+    document.getElementById("naoSeguem").innerText =
+      naoSeguem.join("\n") || "Nenhum";
+
+    document.getElementById("vcNaoSegue").innerText =
+      vcNaoSegue.join("\n") || "Nenhum";
+
+    document.getElementById("mutuos").innerText =
+      mutuos.join("\n") || "Nenhum";
+
+  } catch (e) {
+    alert("Erro ao processar os arquivos!");
+    console.log(e);
   }
-
-  const followersData = JSON.parse(await followersFile.text());
-  const followingData = JSON.parse(await followingFile.text());
-
-  const followers = new Set(
-    followersData.map(u => u.string_list_data[0].value)
-  );
-
-  const following = new Set(
-    followingData.relationships_following.map(u => u.string_list_data[0].value)
-  );
-
-  lista = [...following].filter(u => !followers.has(u));
-
-  mostrar(lista);
-}
-
-function mostrar(arr) {
-  document.getElementById("resultado").innerText = arr.join("\n");
-  document.getElementById("contador").innerText = `❌ ${arr.length} pessoas não te seguem`;
-}
-
-function filtrar() {
-  const termo = document.getElementById("search").value.toLowerCase();
-  const filtrado = lista.filter(u => u.toLowerCase().includes(termo));
-  mostrar(filtrado);
-}
-
-function copiar() {
-  navigator.clipboard.writeText(lista.join("\n"));
-  alert("Lista copiada!");
 }
 </script>
-
-</body>
-</html>

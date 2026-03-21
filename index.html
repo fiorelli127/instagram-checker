@@ -1,6 +1,54 @@
-<script>
-let lista = [];
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Instagram Checker</title>
 
+<style>
+body {
+  font-family: Arial;
+  background: #0f0f0f;
+  color: #fff;
+  padding: 20px;
+}
+
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+button {
+  background: #1f1f1f;
+  color: white;
+}
+
+#resultado {
+  margin-top: 20px;
+  white-space: pre-wrap;
+}
+
+#contador {
+  margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📊 Instagram Checker</h2>
+
+<input type="file" id="followers">
+<input type="file" id="following">
+
+<button onclick="analisar()">Analisar</button>
+
+<div id="contador"></div>
+<div id="resultado"></div>
+
+<script>
 async function analisar() {
   const followersFile = document.getElementById('followers').files[0];
   const followingFile = document.getElementById('following').files[0];
@@ -13,48 +61,40 @@ async function analisar() {
   const followersData = JSON.parse(await followersFile.text());
   const followingData = JSON.parse(await followingFile.text());
 
-  function extrairUsuarios(data) {
-    let usuarios = [];
+  function extrair(data) {
+    let lista = [];
 
     if (Array.isArray(data)) {
-      usuarios = data.map(u => u?.string_list_data?.[0]?.value).filter(Boolean);
+      data.forEach(u => {
+        let val = u?.string_list_data?.[0]?.value;
+        if (val) lista.push(val);
+      });
     } else {
       for (let key in data) {
         if (Array.isArray(data[key])) {
-          data[key].forEach(item => {
-            let user = item?.string_list_data?.[0]?.value;
-            if (user) usuarios.push(user);
+          data[key].forEach(u => {
+            let val = u?.string_list_data?.[0]?.value;
+            if (val) lista.push(val);
           });
         }
       }
     }
 
-    return usuarios;
+    return lista;
   }
 
-  const followers = extrairUsuarios(followersData);
-  const following = extrairUsuarios(followingData);
+  const followers = extrair(followersData);
+  const following = extrair(followingData);
 
-  const followersSet = new Set(followers);
-  lista = following.filter(u => !followersSet.has(u));
+  const naoSeguem = following.filter(u => !followers.includes(u));
 
-  mostrar(lista);
-}
-
-function mostrar(arr) {
-  document.getElementById("resultado").innerText = arr.length ? arr.join("\n") : "Nenhum encontrado";
   document.getElementById("contador").innerText =
-    `❌ ${arr.length} pessoas não te seguem`;
-}
+    `❌ ${naoSeguem.length} pessoas não te seguem`;
 
-function filtrar() {
-  const termo = document.getElementById("search").value.toLowerCase();
-  const filtrado = lista.filter(u => u.toLowerCase().includes(termo));
-  mostrar(filtrado);
-}
-
-function copiar() {
-  navigator.clipboard.writeText(lista.join("\n"));
-  alert("Lista copiada!");
+  document.getElementById("resultado").innerText =
+    naoSeguem.length ? naoSeguem.join("\\n") : "Nenhum encontrado";
 }
 </script>
+
+</body>
+</html>

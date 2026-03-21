@@ -12,26 +12,35 @@ body {
   padding: 20px;
 }
 
-input, button {
+button, input {
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   margin-top: 10px;
   border-radius: 10px;
   border: none;
 }
 
 button {
-  background: #1f1f1f;
+  background: #222;
   color: white;
 }
 
-#resultado {
+.section {
   margin-top: 20px;
-  white-space: pre-wrap;
 }
 
-#contador {
-  margin-top: 10px;
+h3 {
+  margin-top: 20px;
+  color: #ccc;
+}
+
+.lista {
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #111;
+  padding: 10px;
+  border-radius: 10px;
 }
 </style>
 </head>
@@ -45,10 +54,44 @@ button {
 
 <button onclick="analisar()">Analisar</button>
 
-<div id="contador"></div>
-<div id="resultado"></div>
+<div class="section">
+  <h3>❌ Não te seguem de volta</h3>
+  <div id="naoSeguem" class="lista"></div>
+</div>
+
+<div class="section">
+  <h3>⚠️ Você não segue de volta</h3>
+  <div id="vcNaoSegue" class="lista"></div>
+</div>
+
+<div class="section">
+  <h3>🔁 Seguidores mútuos</h3>
+  <div id="mutuos" class="lista"></div>
+</div>
 
 <script>
+function extrairUsuarios(data) {
+  let usuarios = [];
+
+  if (Array.isArray(data)) {
+    data.forEach(u => {
+      let val = u?.string_list_data?.[0]?.value;
+      if (val) usuarios.push(val);
+    });
+  } else {
+    for (let key in data) {
+      if (Array.isArray(data[key])) {
+        data[key].forEach(u => {
+          let val = u?.string_list_data?.[0]?.value;
+          if (val) usuarios.push(val);
+        });
+      }
+    }
+  }
+
+  return usuarios;
+}
+
 async function analisar() {
   const followersFile = document.getElementById('followers').files[0];
   const followingFile = document.getElementById('following').files[0];
@@ -61,38 +104,19 @@ async function analisar() {
   const followersData = JSON.parse(await followersFile.text());
   const followingData = JSON.parse(await followingFile.text());
 
-  function extrair(data) {
-    let lista = [];
+  const followers = extrairUsuarios(followersData);
+  const following = extrairUsuarios(followingData);
 
-    if (Array.isArray(data)) {
-      data.forEach(u => {
-        let val = u?.string_list_data?.[0]?.value;
-        if (val) lista.push(val);
-      });
-    } else {
-      for (let key in data) {
-        if (Array.isArray(data[key])) {
-          data[key].forEach(u => {
-            let val = u?.string_list_data?.[0]?.value;
-            if (val) lista.push(val);
-          });
-        }
-      }
-    }
+  const followersSet = new Set(followers);
+  const followingSet = new Set(following);
 
-    return lista;
-  }
+  const naoSeguem = following.filter(u => !followersSet.has(u));
+  const vcNaoSegue = followers.filter(u => !followingSet.has(u));
+  const mutuos = following.filter(u => followersSet.has(u));
 
-  const followers = extrair(followersData);
-  const following = extrair(followingData);
-
-  const naoSeguem = following.filter(u => !followers.includes(u));
-
-  document.getElementById("contador").innerText =
-    `❌ ${naoSeguem.length} pessoas não te seguem`;
-
-  document.getElementById("resultado").innerText =
-    naoSeguem.length ? naoSeguem.join("\\n") : "Nenhum encontrado";
+  document.getElementById("naoSeguem").innerText = naoSeguem.join("\n") || "Nenhum";
+  document.getElementById("vcNaoSegue").innerText = vcNaoSegue.join("\n") || "Nenhum";
+  document.getElementById("mutuos").innerText = mutuos.join("\n") || "Nenhum";
 }
 </script>
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quem não te segue</title>
+<title>Instagram Analyzer Pro</title>
 
 <style>
 body {
@@ -15,17 +15,7 @@ body {
 
 header {
   text-align: center;
-  padding: 25px 15px;
-}
-
-header h1 {
-  margin: 0;
-  font-size: 22px;
-}
-
-header p {
-  font-size: 13px;
-  color: #aaa;
+  padding: 20px;
 }
 
 .container {
@@ -47,7 +37,6 @@ button {
   border: none;
   background: #262626;
   color: white;
-  font-size: 14px;
 }
 
 input {
@@ -59,16 +48,17 @@ input {
 }
 
 .lista {
-  margin-top: 10px;
   max-height: 200px;
   overflow-y: auto;
   background: #141414;
   border-radius: 10px;
+  margin-top: 10px;
 }
 
 .item {
   padding: 10px;
   border-bottom: 1px solid #333;
+  cursor: pointer;
 }
 
 .item:hover {
@@ -78,18 +68,10 @@ input {
 .count {
   font-size: 12px;
   color: #aaa;
-  margin-top: 5px;
 }
 
 .search {
-  margin-top: 15px;
-}
-
-.viral {
-  margin-top: 20px;
-  text-align: center;
-  font-size: 12px;
-  color: #888;
+  margin-top: 10px;
 }
 </style>
 </head>
@@ -97,33 +79,31 @@ input {
 <body>
 
 <header>
-  <h1>🔥 Quem não te segue</h1>
-  <p>Descubra em segundos</p>
+  <h2>🔥 Instagram Analyzer Pro</h2>
+  <p>Descubra quem deixou de te seguir</p>
 </header>
 
 <div class="container">
 
 <div class="card">
-  <b>1️⃣ Baixe seus dados</b>
-  <button onclick="abrirDownload()">Ir para o Instagram</button>
+  <b>1️⃣ Baixar dados</b>
+  <button onclick="abrirDownload()">Abrir Instagram</button>
 </div>
 
 <div class="card">
-  <b>2️⃣ Extraia o arquivo</b>
-  <p style="font-size:12px; color:#aaa;">
-    Vá em:<br>
-    connections → followers_and_following
-  </p>
-</div>
-
-<div class="card">
-  <b>3️⃣ Envie os arquivos</b>
+  <b>2️⃣ Enviar arquivos</b>
   <input type="file" id="followers" multiple>
   <input type="file" id="following">
   <button onclick="analisar()">Analisar</button>
 </div>
 
-<input class="search" type="text" placeholder="Buscar usuário..." oninput="filtrar(this.value)">
+<input class="search" type="text" placeholder="Buscar..." oninput="filtrar(this.value)">
+
+<div class="card">
+  🔥 Pararam de te seguir
+  <div class="count" id="lostCount"></div>
+  <div id="lost" class="lista"></div>
+</div>
 
 <div class="card">
   ❌ Não te seguem
@@ -143,14 +123,10 @@ input {
   <div id="mutuos" class="lista"></div>
 </div>
 
-<div class="viral">
-  ⚡ Compartilhe com seus amigos
-</div>
-
 </div>
 
 <script>
-let dados = { naoSeguem: [], vcNaoSegue: [], mutuos: [] };
+let dados = { naoSeguem: [], vcNaoSegue: [], mutuos: [], lost: [] };
 
 function abrirDownload() {
   window.open("https://www.instagram.com/download/request/", "_blank");
@@ -159,8 +135,8 @@ function abrirDownload() {
 function limpar(lista) {
   return [...new Set(
     lista
-      .filter(Boolean)
-      .map(u => u.toLowerCase().trim())
+      .filter(u => typeof u === "string")
+      .map(u => u.toLowerCase().trim().replace("@",""))
   )];
 }
 
@@ -185,10 +161,12 @@ function atualizarUI() {
   criarLista(dados.naoSeguem, "naoSeguem");
   criarLista(dados.vcNaoSegue, "vcNaoSegue");
   criarLista(dados.mutuos, "mutuos");
+  criarLista(dados.lost, "lost");
 
   c1.innerText = dados.naoSeguem.length + " pessoas";
   c2.innerText = dados.vcNaoSegue.length + " pessoas";
   c3.innerText = dados.mutuos.length + " pessoas";
+  lostCount.innerText = dados.lost.length + " pessoas";
 }
 
 function filtrar(txt) {
@@ -197,6 +175,7 @@ function filtrar(txt) {
   criarLista(dados.naoSeguem.filter(u => u.includes(txt)), "naoSeguem");
   criarLista(dados.vcNaoSegue.filter(u => u.includes(txt)), "vcNaoSegue");
   criarLista(dados.mutuos.filter(u => u.includes(txt)), "mutuos");
+  criarLista(dados.lost.filter(u => u.includes(txt)), "lost");
 }
 
 async function analisar() {
@@ -237,9 +216,21 @@ async function analisar() {
     const followersSet = new Set(followers);
     const followingSet = new Set(followingClean);
 
-    dados.naoSeguem = followingClean.filter(u => !followersSet.has(u));
-    dados.vcNaoSegue = followers.filter(u => !followingSet.has(u));
-    dados.mutuos = followingClean.filter(u => followersSet.has(u));
+    const novosMutuos = [...followersSet].filter(u => followingSet.has(u));
+    const naoSeguem = [...followingSet].filter(u => !followersSet.has(u));
+    const vcNaoSegue = [...followersSet].filter(u => !followingSet.has(u));
+
+    // 🔥 HISTÓRICO (nível hacker)
+    let antigos = JSON.parse(localStorage.getItem("mutuos_antigos") || "[]");
+
+    dados.lost = antigos.filter(u => !novosMutuos.includes(u));
+
+    // salva estado atual
+    localStorage.setItem("mutuos_antigos", JSON.stringify(novosMutuos));
+
+    dados.mutuos = novosMutuos;
+    dados.naoSeguem = naoSeguem;
+    dados.vcNaoSegue = vcNaoSegue;
 
     atualizarUI();
 

@@ -61,35 +61,39 @@ async function analisar() {
     const followersRaw = JSON.parse(await f1.text());
     const followingRaw = JSON.parse(await f2.text());
 
-    // 🔥 FOLLOWERS (tratamento específico)
-    let followers = [];
+    // função universal (procura usernames)
+    function extrair(obj) {
+      let lista = [];
 
-    if (Array.isArray(followersRaw)) {
-      followers = followersRaw.map(u => u.string_list_data?.[0]?.value).filter(Boolean);
-    } else {
-      // caso venha dentro de outra chave
-      Object.values(followersRaw).forEach(arr => {
-        if (Array.isArray(arr)) {
-          arr.forEach(u => {
-            let val = u?.string_list_data?.[0]?.value;
-            if (val) followers.push(val);
-          });
+      function buscar(item) {
+        if (Array.isArray(item)) {
+          item.forEach(buscar);
+        } else if (typeof item === "object" && item !== null) {
+
+          if (item.string_list_data) {
+            item.string_list_data.forEach(s => {
+              if (s.value) lista.push(s.value);
+            });
+          }
+
+          for (let key in item) {
+            buscar(item[key]);
+          }
         }
-      });
+      }
+
+      buscar(obj);
+      return lista;
     }
 
-    // 🔥 FOLLOWING (sempre padrão)
-    let following = [];
+    const followers = extrair(followersRaw);
+    const following = extrair(followingRaw);
 
-    if (followingRaw.relationships_following) {
-      following = followingRaw.relationships_following.map(
-        u => u.string_list_data?.[0]?.value
-      ).filter(Boolean);
-    }
-
-    // DEBUG (muito importante)
-    console.log("followers:", followers.length);
-    console.log("following:", following.length);
+    // 🔥 DEBUG VISÍVEL
+    alert(
+      "Followers: " + followers.length +
+      "\nFollowing: " + following.length
+    );
 
     const followersSet = new Set(followers);
     const followingSet = new Set(following);

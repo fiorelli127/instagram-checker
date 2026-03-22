@@ -48,6 +48,33 @@ input, button {
 <div id="mutuos" class="lista"></div>
 
 <script>
+function pegarUsernames(data) {
+  let lista = new Set();
+
+  function buscar(obj) {
+    if (Array.isArray(obj)) {
+      obj.forEach(buscar);
+    } else if (typeof obj === "object" && obj !== null) {
+
+      // pega username corretamente
+      if (obj.string_list_data) {
+        obj.string_list_data.forEach(item => {
+          if (item.value && !item.value.includes(" ")) {
+            lista.add(item.value);
+          }
+        });
+      }
+
+      for (let key in obj) {
+        buscar(obj[key]);
+      }
+    }
+  }
+
+  buscar(data);
+  return Array.from(lista);
+}
+
 async function analisar() {
   try {
     const f1 = document.getElementById("followers").files[0];
@@ -61,28 +88,8 @@ async function analisar() {
     const followersRaw = JSON.parse(await f1.text());
     const followingRaw = JSON.parse(await f2.text());
 
-    // 🔥 followers (formato correto)
-    let followers = [];
-
-    if (Array.isArray(followersRaw)) {
-      followers = followersRaw.map(u => u.string_list_data[0].value);
-    } else if (followersRaw) {
-      // tenta pegar dentro de qualquer chave
-      for (let key in followersRaw) {
-        if (Array.isArray(followersRaw[key])) {
-          followersRaw[key].forEach(u => {
-            if (u.string_list_data) {
-              followers.push(u.string_list_data[0].value);
-            }
-          });
-        }
-      }
-    }
-
-    // 🔥 following (sempre assim)
-    const following = followingRaw.relationships_following.map(
-      u => u.string_list_data[0].value
-    );
+    const followers = pegarUsernames(followersRaw);
+    const following = pegarUsernames(followingRaw);
 
     const followersSet = new Set(followers);
     const followingSet = new Set(following);
@@ -92,16 +99,16 @@ async function analisar() {
     const mutuos = following.filter(u => followersSet.has(u));
 
     document.getElementById("naoSeguem").innerText =
-      naoSeguem.length ? naoSeguem.join("\n") : "Nenhum";
+      naoSeguem.join("\n") || "Nenhum";
 
     document.getElementById("vcNaoSegue").innerText =
-      vcNaoSegue.length ? vcNaoSegue.join("\n") : "Nenhum";
+      vcNaoSegue.join("\n") || "Nenhum";
 
     document.getElementById("mutuos").innerText =
-      mutuos.length ? mutuos.join("\n") : "Nenhum";
+      mutuos.join("\n") || "Nenhum";
 
   } catch (e) {
-    alert("Erro ao ler arquivos");
+    alert("Erro ao processar arquivos");
     console.log(e);
   }
 }

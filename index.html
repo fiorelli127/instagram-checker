@@ -16,6 +16,9 @@ button, input {
   padding: 10px;
   margin-top: 10px;
 }
+pre {
+  margin-top: 20px;
+}
 </style>
 </head>
 
@@ -26,13 +29,12 @@ button, input {
 <input type="file" id="followers">
 <input type="file" id="following">
 
-<button id="btn">Analisar</button>
+<button onclick="analisar()">Analisar</button>
 
 <pre id="saida"></pre>
 
 <script>
-document.getElementById("btn").addEventListener("click", async function () {
-
+async function analisar() {
   try {
     const f1 = document.getElementById("followers").files[0];
     const f2 = document.getElementById("following").files[0];
@@ -42,45 +44,36 @@ document.getElementById("btn").addEventListener("click", async function () {
       return;
     }
 
-    const dataFollowers = JSON.parse(await f1.text());
-    const dataFollowing = JSON.parse(await f2.text());
+    const followersRaw = JSON.parse(await f1.text());
+    const followingRaw = JSON.parse(await f2.text());
 
-    function extrairUsuarios(obj) {
-      let lista = [];
+    // 🔥 followers (tratamento seguro)
+    let followers = [];
 
-      function procurar(item) {
-        if (Array.isArray(item)) {
-          item.forEach(procurar);
-        } else if (typeof item === "object" && item !== null) {
-          if (item.string_list_data) {
-            item.string_list_data.forEach(s => {
-              if (s.value) lista.push(s.value);
-            });
-          }
-          for (let key in item) {
-            procurar(item[key]);
-          }
-        }
-      }
-
-      procurar(obj);
-      return lista;
+    if (Array.isArray(followersRaw)) {
+      followers = followersRaw.map(u => u.string_list_data?.[0]?.value).filter(Boolean);
+    } else if (followersRaw.followers) {
+      followers = followersRaw.followers.map(u => u.string_list_data?.[0]?.value).filter(Boolean);
     }
 
-    const followers = extrairUsuarios(dataFollowers);
-    const following = extrairUsuarios(dataFollowing);
+    // 🔥 following (padrão Instagram)
+    let following = [];
+    if (followingRaw.relationships_following) {
+      following = followingRaw.relationships_following.map(
+        u => u.string_list_data?.[0]?.value
+      ).filter(Boolean);
+    }
 
     const naoSeguem = following.filter(u => !followers.includes(u));
 
     document.getElementById("saida").innerText =
-      "Não te seguem:\n\n" + (naoSeguem.length ? naoSeguem.join("\n") : "Nenhum");
+      naoSeguem.length ? naoSeguem.join("\n") : "Nenhum encontrado";
 
   } catch (e) {
     alert("Erro ao ler os arquivos");
     console.log(e);
   }
-
-});
+}
 </script>
 
 </body>

@@ -61,7 +61,7 @@ async function analisar() {
     const followersRaw = JSON.parse(await f1.text());
     const followingRaw = JSON.parse(await f2.text());
 
-    // função universal (procura usernames)
+    // 🔥 função universal (funciona pra qualquer formato)
     function extrair(obj) {
       let lista = [];
 
@@ -88,12 +88,6 @@ async function analisar() {
 
     const followers = extrair(followersRaw);
     const following = extrair(followingRaw);
-
-    // 🔥 DEBUG VISÍVEL
-    alert(
-      "Followers: " + followers.length +
-      "\nFollowing: " + following.length
-    );
 
     const followersSet = new Set(followers);
     const followingSet = new Set(following);

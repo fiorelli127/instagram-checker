@@ -48,33 +48,6 @@ input, button {
 <div id="mutuos" class="lista"></div>
 
 <script>
-function pegarUsernames(data) {
-  let lista = new Set();
-
-  function buscar(obj) {
-    if (Array.isArray(obj)) {
-      obj.forEach(buscar);
-    } else if (typeof obj === "object" && obj !== null) {
-
-      // pega username corretamente
-      if (obj.string_list_data) {
-        obj.string_list_data.forEach(item => {
-          if (item.value && !item.value.includes(" ")) {
-            lista.add(item.value);
-          }
-        });
-      }
-
-      for (let key in obj) {
-        buscar(obj[key]);
-      }
-    }
-  }
-
-  buscar(data);
-  return Array.from(lista);
-}
-
 async function analisar() {
   try {
     const f1 = document.getElementById("followers").files[0];
@@ -88,8 +61,35 @@ async function analisar() {
     const followersRaw = JSON.parse(await f1.text());
     const followingRaw = JSON.parse(await f2.text());
 
-    const followers = pegarUsernames(followersRaw);
-    const following = pegarUsernames(followingRaw);
+    // 🔥 FOLLOWERS (tratamento específico)
+    let followers = [];
+
+    if (Array.isArray(followersRaw)) {
+      followers = followersRaw.map(u => u.string_list_data?.[0]?.value).filter(Boolean);
+    } else {
+      // caso venha dentro de outra chave
+      Object.values(followersRaw).forEach(arr => {
+        if (Array.isArray(arr)) {
+          arr.forEach(u => {
+            let val = u?.string_list_data?.[0]?.value;
+            if (val) followers.push(val);
+          });
+        }
+      });
+    }
+
+    // 🔥 FOLLOWING (sempre padrão)
+    let following = [];
+
+    if (followingRaw.relationships_following) {
+      following = followingRaw.relationships_following.map(
+        u => u.string_list_data?.[0]?.value
+      ).filter(Boolean);
+    }
+
+    // DEBUG (muito importante)
+    console.log("followers:", followers.length);
+    console.log("following:", following.length);
 
     const followersSet = new Set(followers);
     const followingSet = new Set(following);

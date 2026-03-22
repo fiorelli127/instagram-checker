@@ -2,118 +2,159 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Instagram Checker Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quem não te segue</title>
 
 <style>
 body {
   margin: 0;
   font-family: Arial;
-  background: #0d0d0d;
-  color: #fff;
+  background: linear-gradient(180deg, #0d0d0d, #1a1a1a);
+  color: white;
 }
 
 header {
-  padding: 20px;
   text-align: center;
-  font-size: 20px;
-  font-weight: bold;
+  padding: 25px 15px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+header p {
+  font-size: 13px;
+  color: #aaa;
 }
 
 .container {
   padding: 15px;
 }
 
-input, button {
+.card {
+  background: #1f1f1f;
+  border-radius: 15px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+button {
   width: 100%;
   padding: 12px;
   margin-top: 10px;
   border-radius: 12px;
   border: none;
+  background: #262626;
+  color: white;
   font-size: 14px;
 }
 
-button {
-  background: #262626;
-  color: white;
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+.lista {
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #141414;
+  border-radius: 10px;
+}
+
+.item {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+}
+
+.item:hover {
+  background: #2a2a2a;
+}
+
+.count {
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 5px;
 }
 
 .search {
   margin-top: 15px;
 }
 
-.section {
+.viral {
   margin-top: 20px;
-}
-
-.title {
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.count {
+  text-align: center;
   font-size: 12px;
-  color: #aaa;
-  margin-bottom: 10px;
-}
-
-.lista {
-  background: #1a1a1a;
-  border-radius: 12px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.item {
-  padding: 10px;
-  border-bottom: 1px solid #333;
-  cursor: pointer;
-}
-
-.item:hover {
-  background: #2a2a2a;
+  color: #888;
 }
 </style>
 </head>
 
 <body>
 
-<header>📊 Instagram Checker Pro</header>
+<header>
+  <h1>🔥 Quem não te segue</h1>
+  <p>Descubra em segundos</p>
+</header>
 
 <div class="container">
 
-<input type="file" id="followers" multiple>
-<input type="file" id="following">
+<div class="card">
+  <b>1️⃣ Baixe seus dados</b>
+  <button onclick="abrirDownload()">Ir para o Instagram</button>
+</div>
 
-<button onclick="analisar()">Analisar</button>
+<div class="card">
+  <b>2️⃣ Extraia o arquivo</b>
+  <p style="font-size:12px; color:#aaa;">
+    Vá em:<br>
+    connections → followers_and_following
+  </p>
+</div>
+
+<div class="card">
+  <b>3️⃣ Envie os arquivos</b>
+  <input type="file" id="followers" multiple>
+  <input type="file" id="following">
+  <button onclick="analisar()">Analisar</button>
+</div>
 
 <input class="search" type="text" placeholder="Buscar usuário..." oninput="filtrar(this.value)">
 
-<div class="section">
-  <div class="title">❌ Não te seguem</div>
-  <div class="count" id="count1"></div>
+<div class="card">
+  ❌ Não te seguem
+  <div class="count" id="c1"></div>
   <div id="naoSeguem" class="lista"></div>
 </div>
 
-<div class="section">
-  <div class="title">⚠️ Você não segue</div>
-  <div class="count" id="count2"></div>
+<div class="card">
+  ⚠️ Você não segue
+  <div class="count" id="c2"></div>
   <div id="vcNaoSegue" class="lista"></div>
 </div>
 
-<div class="section">
-  <div class="title">🔁 Mútuos</div>
-  <div class="count" id="count3"></div>
+<div class="card">
+  🔁 Mútuos
+  <div class="count" id="c3"></div>
   <div id="mutuos" class="lista"></div>
+</div>
+
+<div class="viral">
+  ⚡ Compartilhe com seus amigos
 </div>
 
 </div>
 
 <script>
-let dados = {
-  naoSeguem: [],
-  vcNaoSegue: [],
-  mutuos: []
-};
+let dados = { naoSeguem: [], vcNaoSegue: [], mutuos: [] };
+
+function abrirDownload() {
+  window.open("https://www.instagram.com/download/request/", "_blank");
+}
 
 function limpar(lista) {
   return [...new Set(
@@ -145,17 +186,17 @@ function atualizarUI() {
   criarLista(dados.vcNaoSegue, "vcNaoSegue");
   criarLista(dados.mutuos, "mutuos");
 
-  document.getElementById("count1").innerText = dados.naoSeguem.length + " pessoas";
-  document.getElementById("count2").innerText = dados.vcNaoSegue.length + " pessoas";
-  document.getElementById("count3").innerText = dados.mutuos.length + " pessoas";
+  c1.innerText = dados.naoSeguem.length + " pessoas";
+  c2.innerText = dados.vcNaoSegue.length + " pessoas";
+  c3.innerText = dados.mutuos.length + " pessoas";
 }
 
-function filtrar(texto) {
-  texto = texto.toLowerCase();
+function filtrar(txt) {
+  txt = txt.toLowerCase();
 
-  criarLista(dados.naoSeguem.filter(u => u.includes(texto)), "naoSeguem");
-  criarLista(dados.vcNaoSegue.filter(u => u.includes(texto)), "vcNaoSegue");
-  criarLista(dados.mutuos.filter(u => u.includes(texto)), "mutuos");
+  criarLista(dados.naoSeguem.filter(u => u.includes(txt)), "naoSeguem");
+  criarLista(dados.vcNaoSegue.filter(u => u.includes(txt)), "vcNaoSegue");
+  criarLista(dados.mutuos.filter(u => u.includes(txt)), "mutuos");
 }
 
 async function analisar() {

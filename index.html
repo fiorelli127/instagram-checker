@@ -61,45 +61,42 @@ async function analisar() {
     const followersRaw = JSON.parse(await f1.text());
     const followingRaw = JSON.parse(await f2.text());
 
-    function extrair(obj) {
-      let lista = [];
+    // 🔥 FOLLOWERS (APENAS value)
+    let followers = [];
 
-      function buscar(item) {
-        if (Array.isArray(item)) {
-          item.forEach(buscar);
-        } else if (typeof item === "object" && item !== null) {
-
-          if (item.title) {
-            lista.push(item.title);
-          }
-
-          if (item.string_list_data) {
-            item.string_list_data.forEach(s => {
-              if (s.value) lista.push(s.value);
-            });
-          }
-
-          for (let key in item) {
-            buscar(item[key]);
-          }
+    if (Array.isArray(followersRaw)) {
+      followers = followersRaw.map(u =>
+        u.string_list_data?.[0]?.value
+      );
+    } else {
+      Object.values(followersRaw).forEach(arr => {
+        if (Array.isArray(arr)) {
+          arr.forEach(u => {
+            let val = u?.string_list_data?.[0]?.value;
+            if (val) followers.push(val);
+          });
         }
-      }
-
-      buscar(obj);
-      return lista;
+      });
     }
 
-    // 🔥 NORMALIZAÇÃO (AQUI ESTÁ A CORREÇÃO REAL)
+    // 🔥 FOLLOWING (APENAS title — SEU FORMATO)
+    let following = [];
+
+    if (followingRaw.relationships_following) {
+      following = followingRaw.relationships_following.map(u => u.title);
+    }
+
+    // 🔥 LIMPEZA REAL (sem misturar dados)
     function limpar(lista) {
       return [...new Set(
         lista
-          .map(u => u.toLowerCase().trim())
           .filter(Boolean)
+          .map(u => u.toLowerCase().trim())
       )];
     }
 
-    const followers = limpar(extrair(followersRaw));
-    const following = limpar(extrair(followingRaw));
+    followers = limpar(followers);
+    following = limpar(following);
 
     const followersSet = new Set(followers);
     const followingSet = new Set(following);

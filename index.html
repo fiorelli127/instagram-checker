@@ -69,16 +69,16 @@ async function analisar() {
           item.forEach(buscar);
         } else if (typeof item === "object" && item !== null) {
 
-          // 🔥 formato antigo
+          // 🔥 FORMATO DO SEU FOLLOWING
+          if (item.title) {
+            lista.push(item.title);
+          }
+
+          // 🔥 FORMATO ANTIGO (followers)
           if (item.string_list_data) {
             item.string_list_data.forEach(s => {
               if (s.value) lista.push(s.value);
             });
-          }
-
-          // 🔥 formato novo
-          if (item.username) {
-            lista.push(item.username);
           }
 
           for (let key in item) {
@@ -93,9 +93,6 @@ async function analisar() {
 
     const followers = extrair(followersRaw);
     const following = extrair(followingRaw);
-
-    // DEBUG
-    alert("Followers: " + followers.length + "\nFollowing: " + following.length);
 
     const followersSet = new Set(followers);
     const followingSet = new Set(following);
@@ -118,6 +115,7 @@ async function analisar() {
     console.log(e);
   }
 }
+</script>
 </script>
 
 </body>

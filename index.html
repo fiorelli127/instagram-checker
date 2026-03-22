@@ -11,13 +11,20 @@ body {
   font-family: Arial;
   padding: 20px;
 }
-button, input {
+
+input, button {
   width: 100%;
   padding: 10px;
   margin-top: 10px;
 }
-pre {
-  margin-top: 20px;
+
+.lista {
+  margin-top: 10px;
+  white-space: pre-wrap;
+  background: #222;
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: auto;
 }
 </style>
 </head>
@@ -31,7 +38,14 @@ pre {
 
 <button onclick="analisar()">Analisar</button>
 
-<pre id="saida"></pre>
+<h3>❌ Não te seguem</h3>
+<div id="naoSeguem" class="lista"></div>
+
+<h3>⚠️ Você não segue</h3>
+<div id="vcNaoSegue" class="lista"></div>
+
+<h3>🔁 Mútuos</h3>
+<div id="mutuos" class="lista"></div>
 
 <script>
 async function analisar() {
@@ -47,30 +61,47 @@ async function analisar() {
     const followersRaw = JSON.parse(await f1.text());
     const followingRaw = JSON.parse(await f2.text());
 
-    // 🔥 followers (tratamento seguro)
+    // 🔥 followers (formato correto)
     let followers = [];
 
     if (Array.isArray(followersRaw)) {
-      followers = followersRaw.map(u => u.string_list_data?.[0]?.value).filter(Boolean);
-    } else if (followersRaw.followers) {
-      followers = followersRaw.followers.map(u => u.string_list_data?.[0]?.value).filter(Boolean);
+      followers = followersRaw.map(u => u.string_list_data[0].value);
+    } else if (followersRaw) {
+      // tenta pegar dentro de qualquer chave
+      for (let key in followersRaw) {
+        if (Array.isArray(followersRaw[key])) {
+          followersRaw[key].forEach(u => {
+            if (u.string_list_data) {
+              followers.push(u.string_list_data[0].value);
+            }
+          });
+        }
+      }
     }
 
-    // 🔥 following (padrão Instagram)
-    let following = [];
-    if (followingRaw.relationships_following) {
-      following = followingRaw.relationships_following.map(
-        u => u.string_list_data?.[0]?.value
-      ).filter(Boolean);
-    }
+    // 🔥 following (sempre assim)
+    const following = followingRaw.relationships_following.map(
+      u => u.string_list_data[0].value
+    );
 
-    const naoSeguem = following.filter(u => !followers.includes(u));
+    const followersSet = new Set(followers);
+    const followingSet = new Set(following);
 
-    document.getElementById("saida").innerText =
-      naoSeguem.length ? naoSeguem.join("\n") : "Nenhum encontrado";
+    const naoSeguem = following.filter(u => !followersSet.has(u));
+    const vcNaoSegue = followers.filter(u => !followingSet.has(u));
+    const mutuos = following.filter(u => followersSet.has(u));
+
+    document.getElementById("naoSeguem").innerText =
+      naoSeguem.length ? naoSeguem.join("\n") : "Nenhum";
+
+    document.getElementById("vcNaoSegue").innerText =
+      vcNaoSegue.length ? vcNaoSegue.join("\n") : "Nenhum";
+
+    document.getElementById("mutuos").innerText =
+      mutuos.length ? mutuos.join("\n") : "Nenhum";
 
   } catch (e) {
-    alert("Erro ao ler os arquivos");
+    alert("Erro ao ler arquivos");
     console.log(e);
   }
 }

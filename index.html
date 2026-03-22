@@ -61,7 +61,6 @@ async function analisar() {
     const followersRaw = JSON.parse(await f1.text());
     const followingRaw = JSON.parse(await f2.text());
 
-    // 🔥 função universal (funciona pra qualquer formato)
     function extrair(obj) {
       let lista = [];
 
@@ -70,10 +69,16 @@ async function analisar() {
           item.forEach(buscar);
         } else if (typeof item === "object" && item !== null) {
 
+          // 🔥 formato antigo
           if (item.string_list_data) {
             item.string_list_data.forEach(s => {
               if (s.value) lista.push(s.value);
             });
+          }
+
+          // 🔥 formato novo
+          if (item.username) {
+            lista.push(item.username);
           }
 
           for (let key in item) {
@@ -88,6 +93,9 @@ async function analisar() {
 
     const followers = extrair(followersRaw);
     const following = extrair(followingRaw);
+
+    // DEBUG
+    alert("Followers: " + followers.length + "\nFollowing: " + following.length);
 
     const followersSet = new Set(followers);
     const followingSet = new Set(following);
